@@ -11,6 +11,8 @@ const cache = new LRUCache({
   maxAge: 1000 * 60 * 2,
 });
 
+app.use(express.json());
+
 app.get('/test', async (req, res) => {
   try {
     if (cache.has(req.url)) {
@@ -43,7 +45,7 @@ app.post('/masuk', async (req, res) => {
     } else {
       res.send({
         status: 'error',
-        message: 'Kartu keluar',
+        message: 'Kartu tidak aktif / tidak ada',
       });
     }
   } catch (error) {
