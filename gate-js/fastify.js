@@ -1,8 +1,11 @@
 import fastify from "fastify";
 import goQuery from "./db.js";
 import LRUCache from "lru-cache";
+import fastifyFormBody from '@fastify/formbody';
 
 const app = fastify();
+
+app.register(fastifyFormBody);
 
 // cache
 
@@ -28,52 +31,59 @@ app.get("/test", async (request, reply) => {
   }
 });
 
-// post idkartu
+// post masuk
 app.post("/masuk", async (request, reply) => {
   try {
-    const { idkartu } = request.body;
-    const result = await goQuery(
-      `SELECT * FROM kartu_akses WHERE id_kartu_akses = '${idkartu}' AND is_aktif = 1`
-    );
-    if (result.length > 0) {
-      return {
-        status: "success",
-        message: "Kartu masuk",
-        data: result,
-      };
+    const { idkartu, idgate } = request.body;
+    let result, gateCheck;
+
+    try {
+      gateCheck = await goQuery(`SELECT * FROM register_gate WHERE id_register_gate = '${idgate}'`);
+      result = await goQuery(`SELECT * FROM kartu_akses WHERE id_kartu_akses = '${idkartu}' AND is_aktif = 1`);
+    } catch (error) {
+      console.error("Error executing query:", error);
+      return 0;
+    }
+
+    if (result.length > 0 && gateCheck.length > 0) {
+      // Logging
+      await goQuery(`INSERT INTO log_masuk (id_kartu_akses, id_register_gate, is_valid) VALUES ('${idkartu}', '${idgate}', '1')`);
+      return 1;
     } else {
-      return {
-        status: "error",
-        message: "Kartu tidak aktif / tidak ada",
-      };
+      return 0;
     }
   } catch (error) {
     throw error;
   }
 });
 
+// post keluar
 app.post("/keluar", async (request, reply) => {
   try {
-    const { idkartu } = request.body;
-    const result = await goQuery(
-      `SELECT * FROM kartu_akses WHERE id_kartu_akses = '${idkartu}' AND is_aktif = 1`
-    );
-    if (result.length > 0) {
-      return {
-        status: "success",
-        message: "Kartu masuk",
-        data: result,
-      };
+    const { idkartu, idgate } = request.body;
+    let result, gateCheck;
+
+    try {
+      gateCheck = await goQuery(`SELECT * FROM register_gate WHERE id_register_gate = '${idgate}'`);
+      result = await goQuery(`SELECT * FROM kartu_akses WHERE id_kartu_akses = '${idkartu}' AND is_aktif = 1`);
+      console.log(result)
+    } catch (error) {
+      console.error("Error executing query:", error);
+      return 0;
+    }
+
+    if (result.length > 0 && gateCheck.length > 0) {
+      // Logging
+      await goQuery(`INSERT INTO log_keluar (id_kartu_akses, id_register_gate, is_valid) VALUES ('${idkartu}', '${idgate}', '1')`);
+      return 1;
     } else {
-      return {
-        status: "error",
-        message: "Kartu tidak aktif / tidak ada",
-      };
+      return 0;
     }
   } catch (error) {
     throw error;
   }
 });
+
 
 try {
   await app.listen({
