@@ -45,13 +45,14 @@ app.post("/masuk", async (request, reply) => {
       return 0;
     }
 
+    let isValid = 0;
     if (result.length > 0 && gateCheck.length > 0) {
-      // Logging
-      await goQuery(`INSERT INTO log_masuk (id_kartu_akses, id_register_gate, is_valid) VALUES ('${idkartu}', '${idgate}', '1')`);
-      return 1;
-    } else {
-      return 0;
+      isValid = 1;
     }
+
+    // Logging
+    await goQuery(`INSERT INTO log_masuk (id_kartu_akses, id_register_gate, is_valid) VALUES ('${idkartu}', '${idgate}', '${isValid}')`);
+    return isValid;
   } catch (error) {
     throw error;
   }
@@ -72,25 +73,31 @@ app.post("/keluar", async (request, reply) => {
       return 0;
     }
 
+    let isValid = 0;
     if (result.length > 0 && gateCheck.length > 0) {
-      // Logging
-      await goQuery(`INSERT INTO log_keluar (id_kartu_akses, id_register_gate, is_valid) VALUES ('${idkartu}', '${idgate}', '1')`);
-      return 1;
-    } else {
-      return 0;
+      isValid = 1;
     }
+
+    // Logging
+    await goQuery(`INSERT INTO log_keluar (id_kartu_akses, id_register_gate, is_valid) VALUES ('${idkartu}', '${idgate}', '${isValid}')`);
+    return isValid;
   } catch (error) {
     throw error;
   }
 });
 
-
 try {
-  await app.listen({
-    port: 3000,
+  const port = process.env.PORT || 3000;
+  app.listen(port, "0.0.0.0", () => {
+    console.log(
+      `🚀 Application is running on: http://localhost:${port} env: ${process.env.NODE_ENV}`
+    );
   });
+
   console.log("Server listening on port 3000");
 } catch (error) {
+
+  
   app.log.error(error);
   process.exit(1);
 }
